@@ -2,6 +2,22 @@
 
 Scope: one local macOS ARM64 Jianying 11.6.0 investigation. Raw logs, application binaries, media, drafts, account information and private paths are intentionally excluded.
 
+## Responsiveness status: bounded fixes, workarounds and open issues
+
+**The experiments do not establish that all unresponsive states are fixed.** UI redraw pressure, directory access, shared task-queue waiting and external storage interruption have separate evidence and remedies. Waiting for unfinished preparation is not by itself proof of a UI hang.
+
+| Issue / path | What is established | Current boundary |
+|---|---|---|
+| Delayed task-popup completion refresh | Narrow callback patch loaded; compound/loudness smoke passed, with no updater occurrences in one later sample | Experimental local validation; other refresh paths remain. No universal task-popup or application-hang fix, and rows may be stale until reopened |
+| Remembered external export directory enumeration | Native selection of an accessible local output directory resolved the observed export-panel access symptom | Configuration workaround, not export-code repair. Installed/candidate export code was unchanged; underlying OS access-stall cause remains unknown |
+| Export waiting for compound preparation | The bounded inspected function waits on the EditorMode-shared helper's whole video queue without an active-film filter in that path | **Not fixed.** Which queued jobs are unrelated or unnecessary has not been mapped; queue size does not prove avoidable work |
+| External USB / volume interruption | A separate external storage interruption occurred during a later run | Not evidence of a patch regression, and not a storage issue repaired by these patches; keep interruption/recovery separate from responsiveness and timing claims |
+| Equal progress rows in a later real-project run | Two separate native compound worker threads and two growing color-output families, each with its own alpha sibling, were independently observed | Confirms two physical render operations in that observation, not two semantically different/necessary jobs or a binding from each visible row to a worker |
+| Two-job scheduling | Independent cold derived-cache ABBA completed; both candidate runs had overlapping distinct output groups | **No measured throughput improvement.** Preserve serial scheduling as the practical default; see [all ABBA trials](#cold-derived-cache-abba-two-job-scheduling) |
+| Audio-only normalization alternative | Native detached-audio preparation was fast in one cold sample | Strict native output equivalence failed. No transparent audio-input patch or default detached-audio rewrite is justified |
+
+No patch here adds active-film queue scoping, fixes all directory access, guarantees storage continuity, or demonstrates general opening/rendering/export acceleration. The evidence below distinguishes static inspection, runtime smoke, export/decode, cancellation and controlled timing rather than combining them into a single "fixed" label.
+
 - A native sample contained 1,326 of 1,597 main-thread samples (83%) under `TaskCenterViewModel::updateTaskList(bool)`, with 10.4 GB physical footprint. This identifies sampled UI work, not the unique initiating callback or a vendor-confirmed universal defect.
 - The four-byte candidate skipped the delayed completion callback's final task-list refresh. A separate copied, ad-hoc-signed app loaded its patched library. One 300-second compound completed pre-rendering and normalization; a later 905-sample main-thread capture contained zero updater-stack occurrences. Workload and timing differed from the initial sample: this is smoke evidence, not a causal A/B comparison.
 - After choosing an accessible local export directory through the native application UI, the copied app exported an approximately 247.97-second H.264/AAC film at 1080×1920, 30 fps. Full native audio/video decoding passed; 12 sampled pictures had low-resolution mean absolute differences of 0–0.860 / 255 against the official-app export. This is not full-frame equivalence or human audio review. Native cancellation returned to the editor and left no aborted final output. The saved project reopened; long-term reliability remains unknown.
@@ -41,6 +57,18 @@ Coarse open-to-visible-editor observations were A: 2.490 / 2.249 seconds and B: 
 Separate diagnostic runs, excluded from ABBA timing, showed one versus two native QtConcurrent compound workers with their own render/encode queues. Render queues waited at the same TEVTEncodeUnit input-lock callsite in approximately 66.5% of single-task samples versus 82.2% / 82.0% of two-task samples. Encoder queues spent approximately 98.8% versus 99.5% / 99.2% under VTCompressionSessionEncodeFrame, primarily waiting for CoreMedia semaphores. This supports encode-path backpressure propagating upstream. It does not identify the lock owner, prove a global mutex, or prove hardware/media-engine saturation. GPU-wide utilization snapshots cannot settle those questions. Both diagnostic main-thread profiles had zero task-list-updater occurrences and mostly event waiting.
 
 Recommendation from this fixture: preserve serial scheduling as the practical default. The two-job experiment changes admission, but did not accelerate the lower rendering/encoding pipeline. Prioritize valid cache reuse and reducing equivalent redundant preparation; investigate encoder-session ownership, lock lifetime and intermediate video/alpha format costs before changing concurrency further.
+
+## Later real-project identity audit: physical concurrency, semantic attribution open
+
+A separate read-only audit identified the currently launched experimental app. Its on-disk library hash exactly matched that build's signed-library manifest, and all declared semantic change ranges matched their recorded bytes. This identifies the launched app's on-disk candidate; the audit did not inspect live-memory instruction bytes or replace any binary.
+
+A native sample contained **two separate QtConcurrent compound `doTask` worker threads**, not just two encoder queues. Independent open-file metadata and timed size observations showed **two different color-output families growing concurrently, each with its own alpha sibling**. A single compound can have color and alpha encoders, so two encoder queues alone would have been insufficient; the separate compound workers and two growing color families provide the stronger evidence here. No raw filenames, process/thread identifiers, private media or logs are published.
+
+This rules out the explanation that there was only one physical render operation hidden behind two displayed rows in this observation. It does **not** show that the two operations render different useful content, that both are necessary for the active film, or that each visible row is bound to a different native task. Duplicate or stale UI binding could coexist with real concurrent renders. Equal percentages, similar output sizes or distinct filenames cannot settle semantic identity or active-film dependency membership.
+
+The current cap hooks operate on existing queued entries and active-state admission. They do not enqueue or clone tasks, change task/row indexing, or write progress values; they also reject the same already-active task at the inspected admission path. That bounded inspection does not rule out equivalent graphs arriving through native upstream enqueue/cache invalidation, an unmodified UI binding issue, or risks outside the existing serialized-mutation assumption. No semantic deduplication or active-film queue filter is implemented.
+
+The unresolved attribution chain is visible row → native task/material/segment → graph and source ranges → output family → active-film dependency. Do not cancel, discard caches or deduplicate jobs solely because two progress bars match. Physical concurrency is consistent with shared rendering/encoding backpressure and with the [controlled ABBA result](#cold-derived-cache-abba-two-job-scheduling): **no measured useful throughput gain**. Keep serial scheduling as the practical default.
 
 ## Native cancellation, export and saved-cache reuse
 
