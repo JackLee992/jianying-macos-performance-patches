@@ -29,6 +29,18 @@ No patch here adds active-film queue scoping, fixes all directory access, guaran
 A controlled same-fixture application-derived-cache-cold ABBA trial is now complete; it showed no throughput improvement (details below). No rendering speedup, safe concurrency configuration key, general audio-only-input patch or universal hardware recommendation is claimed.
 
 
+## Later full-project stop and bounded canaries
+
+In a later migrated-project run, the user explicitly canceled a full export after more than an hour of waiting. The project was saved and the application quit normally. **No new final film was produced by that run.** Earlier successful fixture exports are separate evidence, not completion of this delivery.
+
+Stable, owned derived-cache outputs were protected locally with hard links and their sizes/mtimes were rechecked unchanged. This is bounded metadata-preservation evidence, not content-equivalence or cache-validity proof. An additional hard link can retain inode data if the application unlinks the original cache pathname; the links share that inode and do not isolate in-place writes or provide an independent disk-failure backup. After the application was closed, the protected links still had unchanged sizes/mtimes, while some owned source-cache pathnames had been removed by the earlier native Home lifecycle. The protected links remained. Home/reopen is therefore not a cost-free queue reset; do not blindly restore outputs whose cache validity is unknown. No private inventory, counts, paths or project identifiers are published.
+
+Two native small transfer attempts used one complex compound: copy followed by normal quit/relaunch into an empty project, and copy followed by native Home into an empty project in the same process. Neither produced pasted content; Edit → Paste was observed disabled. Clipboard contents were not diagnosed. These results reject cross-project paste as a validated optimization for this workflow; they do not establish that all application versions or all copy modes are unsupported.
+
+Practical policy: honor explicit user cancellation; prefer native cancel, Save and normal Quit for stopping a long run, and protect required stable caches. Before any larger run, select the intended current timeline and establish its recursive needed dependencies and valid caches; the exact runtime closure remains unknown and no active-film scope correction is implemented or validated. Limit a new optimization attempt to one representative compound. A three-minute observation boundary means stop expanding the experiment and diagnose/report unresolved scope or progress; it is not a completion-time promise or an automatic render-cancellation rule. Do not use an hour-long wait for the global queue as the default way to validate scope.
+
+The two-job ABBA still showed no speedup, detached-audio output equivalence still failed, and the published candidate's row-attribution gap remains unfixed. These bounded outcomes do not support an "all hangs fixed" claim.
+
 ## Portable experiment integration
 
 The public two-job builder's read-only plan passed against the exact source hash and verified all original hook sites plus executable zero padding. Its compiled ARM64 leaf-hook harness passed 14,377 checks, including its bounded lifecycle model. No application was built or launched by this packaging verification. These checks do not execute the vendor C++ engine or establish sibling-cancellation behavior, cross-thread safety, exports, or speedup.
