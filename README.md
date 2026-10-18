@@ -12,10 +12,10 @@
 | 记忆的外置导出目录访问阻塞 | 原生选择可访问本地目录后，观测症状恢复 | 是配置绕行，没有修补导出代码；OS 层根因未知 |
 | 导出等待复合准备 | 有界静态路径等待 EditorMode 共享 helper 整个视频队列，未见活动成片过滤 | **尚未修复**；还未映射哪些工作无关或不必要，不能凭全局队列数裁任务 |
 | USB/卷断连 | 后续运行有独立外部存储中断事件 | 不是已建立的补丁回归，也没有被本仓库补丁修复 |
-| 两个进度条相同 | 两个独立原生 compound worker、两组同时增长的 color 输出，各有自己的 alpha | 能证明有两路物理渲染，不能证明内容不同/都必要，也未映射每条 UI 行到具体任务 |
+| 两个进度条相同 | 两路物理渲染已证实；共享行回调缺少任务身份筛选的静态机制已找到 | **我们的 Parallel2 适配缺口，尚未修复**；progress 可串扰，state 也有静态风险；不能仅据每行显示精确判断任务完成 |
 | 两任务并行与纯音频替代 | 并发路径有原生证据；音频快准备有单次观察 | [ABBA 未测到提速](EVIDENCE.md#cold-derived-cache-abba-two-job-scheduling)，纯音频输出等价失败；保留串行默认，不自动改用户音轨 |
 
-完整证据与每项限制见 [EVIDENCE.md](EVIDENCE.md#responsiveness-status-bounded-fixes-workarounds-and-open-issues)。 本轮独立核查的已启动应用磁盘库与签名构建 manifest 一致；并发钩子不创建/克隆队列任务、不改行索引或进度值。上游是否产生等价任务、UI 是否重复绑定、哪些任务属于当前成片仍未查清，不能据相同百分比去重或删缓存。后台还在准备不自动等于界面卡死；也不能把局部 smoke 通过当作整个应用已无卡顿。
+完整证据与每项限制见 [EVIDENCE.md](EVIDENCE.md#responsiveness-status-bounded-fixes-workarounds-and-open-issues)。 本轮独立核查的已启动应用磁盘库与签名构建 manifest 一致。并发钩子虽不直接创建/克隆任务或写进度，但改变了原有单活动任务假设，尚未适配共享信号到各行的身份检查。不能据相同百分比去重或删缓存；语义任务是否等价/必要与实际行到任务映射仍未查清。后台还在准备不自动等于界面卡死；也不能把局部 smoke 通过当作整个应用已无卡顿。
 
 ## 支持范围与实测状态
 
@@ -74,6 +74,8 @@ python3 experiments/parallel2/build_parallel2.py \
   --source-app /Applications/VideoFusion-macOS.app \
   --output-dir ./parallel2-build --build-apps
 ```
+
+**当前 Parallel2 有未修复的行显示适配缺口。** 各运行行订阅同一个 helper 的进度信号，回调读取事件任务进度后写入捕获行，未核对任务身份；两任务时可能镜像最后一次进度，state 回调也有类似静态缺口。这是我们的实验并发适配问题，不是 Qt 不会并行或普遍厂商缺陷。当前发布候选未包含身份筛选修复，对应原生验收未完成，不能把当前每行进度/状态当作精确完成证据；详见 [回调证据与边界](EVIDENCE.md#parallel2-row-callback-identity-gap-not-fixed)。
 
 需要已有 Xcode Command Line Tools。本机冷派生缓存 ABBA 约 267.9 秒对 268.9 秒，未测到吞吐提速；详见 [EVIDENCE.md](EVIDENCE.md) 和 [parallel2 README](experiments/parallel2/README.md)。上限只针对既有串行变更契约下同一 helper 视频队列的 active 项；不保证整个程序线程安全，不改变音频队列。单项原生取消时另一任务继续并完成，稍后重试通过；取消全部、立即重试、错误恢复与全片内容等价仍未验收。取消释放 active 标记也不证明底层渲染器已退出。保留串行默认，不宣称倍速。
 
