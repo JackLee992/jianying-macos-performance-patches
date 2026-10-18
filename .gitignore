@@ -1,0 +1,22 @@
+# Public repository allowlist. Add files deliberately.
+*
+!/.gitignore
+!/README.md
+!/DESIGN.md
+!/EVIDENCE.md
+!/LICENSE
+!/jianying_patch.py
+!/tests/
+!/tests/test_builder.py
+!/tests/test_audio_compare.py
+!/experiments/
+!/experiments/parallel2/
+!/experiments/parallel2/README.md
+!/experiments/parallel2/build_parallel2.py
+!/experiments/parallel2/parallel2_hooks.S
+!/experiments/parallel2/native_harness.c
+!/experiments/audioonly/
+!/experiments/audioonly/RESEARCH.md
+!/experiments/audioonly/AUDIO_BENCH_PROTOCOL.md
+!/experiments/audioonly/inspect_audio_route.py
+!/experiments/audioonly/compare_audio.py
