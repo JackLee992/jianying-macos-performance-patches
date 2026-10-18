@@ -1,6 +1,6 @@
 # Bounded two-job video-compound experiment
 
-Status: **offline candidate; no vendor-runtime or controlled speedup acceptance**. At packaging time only the native hook harness and version-locked offline construction are established. The builder performs static checks, executes an ARM64 hook harness, clones two separate apps, signs them and verifies their signatures. It never launches an app, restarts a process, opens a project, changes installed software or deletes a cache. Vendor-runtime correctness and cold-cache speed are not established by these checks.
+Status: **experimental; native two-job preparation observed, no measured speedup**. A matched copied-app ABBA run on one independent native fixture completed both precombine/loudness operations, but averaged 268.886 seconds versus the serial baseline 267.869 seconds. A later native 20m55 export passed full audio/video decoding; save/reopen retained the four cache files and both completed loudness states. Single-row cancellation preserved the sibling's progress and a later explicit retry completed. See [EVIDENCE.md](../../EVIDENCE.md) for cache/topology/timing boundaries and remaining gates. The builder performs static checks, executes an ARM64 hook harness, clones two separate apps, signs them and verifies their signatures. It never launches an app, restarts a process, opens a project, changes installed software or deletes a cache. The offline checks alone do not establish vendor-runtime correctness or speed.
 
 Requirements: Apple Silicon macOS, existing Xcode command-line tools, Python3. No downloads or injected libraries. The exact original `libVECreator.dylib` SHA-256 must be `6a7854189fe4b4c5e9b74441122ce62ce637c10780287fe6079b2e13d293ac33`. A different build is refused even if its displayed version is 11.6.0.
 
@@ -49,3 +49,5 @@ one task is canceled. Native hook-model tests do not establish this vendor
 engine behavior. Runtime acceptance must include this scenario before any
 production recommendation. Stop on unexpected sibling cancellation or recovery
 behavior; retain the official application and original cache state.
+
+One native single-row cancellation plus later retry has now passed on the independent fixture: the canceled output disappeared, its sibling continued through 22 observed growth samples and completed, then the explicitly retried target regenerated and completed. This does not establish cancel-all, immediate overlapping retry, worker-exit acknowledgement, failure recovery or full content equivalence. An active reservation can clear before a renderer has stopped; two active entries is not a strict bound on all draining renderers. Together with the ABBA no-speedup result, the candidate remains experimental and serial remains the practical default.

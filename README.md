@@ -1,6 +1,6 @@
 # 剪映 macOS 性能实验补丁
 
-为 **剪映专业版 11.6.0、ARM64、特定原始库 SHA-256** 制作独立应用副本的开源工具。仅分发原创工具与研究摘要，不分发剪映、厂商库、媒体或工程。本仓库同时提供任务列表刷新 `taskcenter`、两任务调度的独立离线候选构建器，以及纯音频输入的研究与验证工具；没有证明这些实验能加快工程首次打开/解析或首次媒体预合成。
+为 **剪映专业版 11.6.0、ARM64、特定原始库 SHA-256** 制作独立应用副本的开源工具。仅分发原创工具与研究摘要，不分发剪映、厂商库、媒体或工程。本仓库同时提供任务列表刷新 `taskcenter`、两任务调度的独立实验构建器，以及纯音频输入的研究与验证工具；没有证明这些实验能加快工程首次打开/解析或首次媒体预合成。
 
 ## 支持范围与实测状态
 
@@ -8,8 +8,8 @@
 |---|---|---|---|---|
 | `taskcenter` | 四字节补丁及签名验证已完成 | 一个 300 秒复合片段预合成/响度 smoke 通过 | 一份约 4 分 8 秒工程导出并完整解码；12 帧抽查、取消测试通过 | **未完成** |
 | `none` | 构建同样重签名的无语义补丁对照副本 | 本工具不自动运行 | 待具体比较实验 | 未完成 |
-| 两任务并行 | 独立 builder：精确指令/映射/代码洞检查、ARM64 native hook 测试，安全副本构建 | **离线候选，厂商运行待验证** | 未验证 | 未完成 |
-| 纯音频响度输入 | 研究阶段，未找到已验证安全补丁 | 未验证 | 未验证 | 未完成 |
+| 两任务并行 | 独立 builder、精确指令/映射/代码洞检查、ARM64 hook 测试与安全副本 | 两路独立预合成及响度完成 | 20 分 55 秒原生导出及完整解码、保存复开缓存保持通过；单项取消/稍后重试通过 | **ABBA 完成，未测到提速** |
+| 纯音频响度输入 | 研究阶段，未找到已验证安全补丁 | 原生分离音频冷缓存约 5.25 秒完成一个约 628 秒片段的响度处理 | 无响度 WAV 对照有样本差异，**未通过等价验收** | 单次路径观察，不能作为默认替代 |
 
 历史 smoke 与导出来自本机同版本实验，不是此公共 CLI 在其他 Mac 上的验收。CPU 空闲、单次无卡顿、已缓存工程的导出，都不能证明首次预合成提速。详细边界见 [EVIDENCE.md](EVIDENCE.md) 与 [DESIGN.md](DESIGN.md)。
 
@@ -60,7 +60,7 @@ python3 experiments/parallel2/build_parallel2.py \
   --output-dir ./parallel2-build --build-apps
 ```
 
-需要已有 Xcode Command Line Tools。详见 [parallel2 README](experiments/parallel2/README.md)。上限只针对既有串行变更契约下同一 helper 视频队列的 active 项；不保证整个程序线程安全，不改变音频队列。取消一项时对并行同组任务的影响仍须原生运行验收。没有受控 A/B，不宣称倍速。
+需要已有 Xcode Command Line Tools。本机冷派生缓存 ABBA 约 267.9 秒对 268.9 秒，未测到吞吐提速；详见 [EVIDENCE.md](EVIDENCE.md) 和 [parallel2 README](experiments/parallel2/README.md)。上限只针对既有串行变更契约下同一 helper 视频队列的 active 项；不保证整个程序线程安全，不改变音频队列。单项原生取消时另一任务继续并完成，稍后重试通过；取消全部、立即重试、错误恢复与全片内容等价仍未验收。取消释放 active 标记也不证明底层渲染器已退出。保留串行默认，不宣称倍速。
 
 纯音频输入当前是**研究，不是可激活补丁**。可在自己安装的原始库上只读核查静态路径：
 
@@ -70,6 +70,8 @@ python3 experiments/audioonly/inspect_audio_route.py \
 ```
 
 [研究结果](experiments/audioonly/RESEARCH.md) 解释为什么改文件名、绕过依赖检查或伪造完成不成立。[原生分离音频对照协议](experiments/audioonly/AUDIO_BENCH_PROTOCOL.md) 是显式编辑流程实验，须先证明混音/时间/效果等价再比较响度速度。`compare_audio.py reference.wav candidate.wav` 需要现有 FFmpeg/FFprobe，只解码读取两个输入，以固定 48 kHz PCM 比较；不作增益/时间对齐，不替代人工听检或所有格式的位级等价证明。
+
+原生分离路径确实绕过了本轮冷视频/alpha 预合成，但相同时长的无响度 WAV 对照出现约 1.07% 相对 RMS 样本差异，且 WAV 未声明通道布局。因此这条快路径仍属研究，不能自动改用户工程、放宽阈值或把局部准备耗时包装成最终导出倍速。工程迁移/首次打开/解析也没有提速验收；操作流程见独立技能 [jianying-performance-operator-skill](https://github.com/JackLee992/jianying-performance-operator-skill)。
 
 ## 签名和实际操作风险
 

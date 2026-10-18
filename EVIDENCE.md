@@ -10,7 +10,7 @@ Scope: one local macOS ARM64 Jianying 11.6.0 investigation. Raw logs, applicatio
 - A short 8 GiB SSD test measured about 797 MB/s sequential read and 446 MB/s average write, with late write windows around 330–360 MB/s. This was approximately 34 seconds of I/O, not a sustained thermal or health test. Results do not generalize to other drives or prove all runtime I/O was fast.
 - Pure-audio FFmpeg loudness measurement of two approximately 628-second sources took about 2.05 and 2.06 seconds. It bypassed the application's compound effects, mixing, caching and scheduler. It is not an end-to-end Jianying optimization result.
 
-No controlled same-fixture, application-derived-cache-cold baseline/candidate/candidate/baseline trial has been completed. No rendering speedup, safe concurrency key, general audio-only-input patch or universal hardware recommendation is claimed.
+A controlled same-fixture application-derived-cache-cold ABBA trial is now complete; it showed no throughput improvement (details below). No rendering speedup, safe concurrency configuration key, general audio-only-input patch or universal hardware recommendation is claimed.
 
 
 ## Portable experiment integration
@@ -20,3 +20,44 @@ The public two-job builder's read-only plan passed against the exact source hash
 The public read-only audio-route checker matched all eight instruction sites and expected branch targets on the same source. The PCM comparison utility accepted identical generated stereo WAV audio and rejected a half-gain variant; fitted gain remained diagnostic. This verifies utility behavior, not the native detached-audio workflow or a transparent audio-only normalization patch.
 
 The public main CLI also built a real copied taskcenter app locally: full copy verification, the exact four-byte semantic diff, ad-hoc signatures and strict verification passed; the source application's inventory remained unchanged. This specific generated copy was not launched. The malformed-decoder regression emits over 2 MB to stderr before stdout and returns a bounded failure rather than hanging; 14 utility tests passed on two local Python installations.
+
+## Cold derived-cache ABBA: two-job scheduling
+
+One independently created native draft contained two distinct approximately 628-second compounds in a single timeline. The complete stopped-app seed (metadata, encrypted timeline data and subdrafts) was restored byte-identically to the same canonical path before each run. Its derived Resources and loudness outputs were absent; the native application generated both output groups anew. Source media were read from the external SSD, while this fixture's physical derived-cache directory was on the internal SSD. Original production projects and their existing caches were preserved. OS page cache was uncontrolled; this is not an OS-cache-cold SSD migration benchmark.
+
+Both copied apps had the same UI patch and ad-hoc signing procedure; only the two-job hooks differed. The native multi-selected loudness checkbox triggered both jobs. Task popup stayed closed during ABBA. Times below are from that action to each finalized video-cache file, and to the last native loudness-result file. Later native UI inspection confirmed both loudness operations completed. File observations were polled every two seconds; final-file mtime supplied the completion timestamp, not the delayed popup redraw.
+
+| Order | Arm | Video group completion seconds | Both loudness results seconds |
+|---|---|---|---|
+| 1 | UI baseline A1 | 133.629 / 267.102 | 267.928 |
+| 2 | Two-job B1 | 267.036 / 267.091 | 268.667 |
+| 3 | Two-job B2 | 267.434 / 267.492 | 269.104 |
+| 4 | UI baseline A2 | 133.624 / 267.031 | 267.809 |
+
+Baseline mean: 267.869 seconds. Two-job mean: 268.886 seconds, about 1.017 seconds (0.38%) longer. With only two runs per arm and uncontrolled OS cache/background state, this small difference is not evidence of a regression; it is **no measured speedup**. Candidate runs each had 131 observation intervals where two distinct video groups grew together; baseline had only the single handover interval. Video plus alpha counts as one group. Both native loudness-result files were byte-identical across all four runs. Cache-container bytes differed across runs, including between baseline runs; no full picture equivalence follows from cache size or these audio results.
+
+Coarse open-to-visible-editor observations were A: 2.490 / 2.249 seconds and B: 2.718 / 3.094 seconds. This simple existing draft is not a complex project migration/parse benchmark; no opening or parsing acceleration is established.
+
+Separate diagnostic runs, excluded from ABBA timing, showed one versus two native QtConcurrent compound workers with their own render/encode queues. Render queues waited at the same TEVTEncodeUnit input-lock callsite in approximately 66.5% of single-task samples versus 82.2% / 82.0% of two-task samples. Encoder queues spent approximately 98.8% versus 99.5% / 99.2% under VTCompressionSessionEncodeFrame, primarily waiting for CoreMedia semaphores. This supports encode-path backpressure propagating upstream. It does not identify the lock owner, prove a global mutex, or prove hardware/media-engine saturation. GPU-wide utilization snapshots cannot settle those questions. Both diagnostic main-thread profiles had zero task-list-updater occurrences and mostly event waiting.
+
+Recommendation from this fixture: preserve serial scheduling as the practical default. The two-job experiment changes admission, but did not accelerate the lower rendering/encoding pipeline. Prioritize valid cache reuse and reducing equivalent redundant preparation; investigate encoder-session ownership, lock lifetime and intermediate video/alpha format costs before changing concurrency further.
+
+## Native cancellation, export and saved-cache reuse
+
+A separate two-active-task run tested one native loudness task row's X and a later explicit retry. Turning off its loudness checkbox at 76.564 seconds did not stop already-started preparation. Actual row cancellation occurred at 176.421 seconds; the target output was absent at the next poll, 0.826 seconds later. That is an observation interval, not an exact cancellation latency. Its sibling continued through 22 growth observations and finalized video at 221.798 seconds, then its loudness record at 222.649 seconds. A later retry at 257.488 seconds produced a fresh target output: video finalized 133.587 seconds after retry and loudness 134.319 seconds after retry. Native UI subsequently showed both completed at the -23 LUFS target.
+
+The same candidate then natively exported the full two-compound timeline: H.264 1080×1920 at 30 fps, video duration 1255.233333 seconds (37,657 frames), AAC 44.1 kHz stereo, file size 1,915,457,780 bytes. Full video and audio decoding returned zero with no error output. Twelve pictures sampled through the timeline showed the two expected source scenes. Audio was non-silent (mean -28.4 dB, peak -2.9 dB in a decoded volume scan). This is stream/decode and sampled-picture validation, not proof of full picture/audio equivalence or a human listening pass. The original production film was not changed by this experiment.
+
+After saving and normally quitting, the native editor reopened in an observed 2.202 seconds. Both compound loudness states remained completed at -23 LUFS. All four video/alpha cache paths, sizes and nanosecond mtimes stayed unchanged during the observed reopen period. This supports cache retention in this fixture, not a benchmark of complex migration/first parsing or proof that every future reopen hits every cache.
+
+Cancel-all, immediate overlapping retry, failed-render recovery, worker-exit acknowledgement and complete content equivalence remain unverified. The active-entry cap does not prove that canceled renderers have stopped before another starts. Do not infer those gates from the hook harness or the passing single-row scenario.
+
+## Native detached-audio cold gate: fast preparation, equivalence not passed
+
+The same complete normalization-off seed was restored with zero derived cache files. In the serial UI-baseline app, native `分离音频` on the first approximately 627.6-second video compound created an audio clip in under one observed second. Enabling loudness on that audio clip generated only an approximately 15.2 MB audio-combination cache, finalized 4.628 seconds after the checkbox action, and a 17-byte loudness record at 5.252 seconds. Native UI showed -23 LUFS complete. No video/alpha cache appeared in the recorded route. OS page cache was uncontrolled and this is one observation, not an ABBA audio trial. Interactive preparation and eventual video export costs are separate.
+
+For the semantic gate, native lossless WAV exports of the entire 20m55 timeline were compared with normalization OFF in both arms: first compound detached versus both compounds intact. Both outputs were PCM16, 44.1 kHz, two channels and exactly 1255.224308 seconds; both had 60,250,767 decoded frames at the comparator's common 48 kHz. However the relative RMS sample difference was 0.0106621, maximum absolute difference 0.0337854, and diagnostic fitted gain 0.999499. Neither WAV declared channel layout. The strict comparator correctly returned **not equivalent**; no gain/time correction or relaxed threshold was used to force a pass. An intermediate encoding difference is a possible explanation, not a proven cause.
+
+A separate comparison of the original 44.1 kHz PCM localized every differing sample to the detached first compound. From its 627.566667-second boundary onward, all 55,359,404 scalar samples in the untouched second portion were bit-identical. The first portion had relative RMS error 0.01568135 and maximum difference 1,122 PCM16 LSB (0.0342407 full scale); both complete WAVs had 55,355,392 original-rate frames. Whole-file original-rate relative error 0.01066240 agrees with the resampled comparison. Thus comparator resampling does not explain the observed signal change; this is larger than one-LSB rounding. Its encoding or effect-transfer cause is still unproven.
+
+Normalized-output equivalence, trim/speed/fade/effect/mix semantics, human listening, final video correctness and repeated cold audio trials remain separate gates. No transparent audio-input patch is implemented. Do not use this local preparation result as a default project rewrite or a final-export speedup claim.

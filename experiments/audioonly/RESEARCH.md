@@ -68,8 +68,36 @@ available for playback and final video export.
 The independent-project `分离音频` operation is a separate workflow candidate,
 not this missing transparent binary patch. `canSeparateAudio` at `0x3bf6dec`
 checks for a video segment with audio and has no explicit compound exclusion
-in the bounded function. Runtime UI availability and the created material
-type must still be checked. See `AUDIO_BENCH_PROTOCOL.md`.
+in the bounded function. See `AUDIO_BENCH_PROTOCOL.md`.
+
+In one native cold-derived-cache test this menu created an audio clip in under
+one observed second. Enabling normalization on it finalized only an audio
+combination file at 4.628 seconds and a loudness record at 5.252 seconds, with
+no video/alpha outputs. The native UI reported the -23 LUFS target completed.
+This establishes this fixture's audio-only route; it is not a transparent
+patch, a repeated audio A/B trial or a final-video-export benchmark.
+
+The semantic gate did not pass. With normalization OFF in both arms, full
+native WAV exports before/after detaching the first compound had equal PCM16
+44.1 kHz two-channel durations (1255.224308 seconds), but the comparator found
+relative RMS sample difference 0.0106621 and maximum absolute error 0.0337854.
+Neither WAV declared channel layout. Diagnostic fitted gain 0.999499 does not
+erase the sample difference. Intermediate encoding is a possible explanation,
+not an established cause. No alignment, gain correction or looser threshold
+was used to force acceptance.
+
+An original-rate 44.1 kHz PCM check localized all differences to the detached
+first compound: its relative RMS error was 0.01568135 and maximum difference
+1,122 PCM16 LSB. Every sample in the untouched second portion was bit-identical.
+The whole-file original-rate relative error 0.01066240 agrees with the 48 kHz
+comparison, ruling out comparator resampling as the explanation for this
+observed difference. Encoding/effect-transfer causes remain unestablished.
+
+Keep this workflow experimental. Normalized-output comparison, actual channel
+mapping, trim/speed/fade/gain/effect/mix semantics, human listening, final video
+correctness and repeated whole-workflow timing remain gates. Do not silently
+detach audio in another user's project or claim a roughly 26x final-export
+speedup from the separate preparation-stage observations.
 
 ## Public packaging boundary
 
